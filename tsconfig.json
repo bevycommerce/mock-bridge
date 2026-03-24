@@ -13,7 +13,16 @@
     "declarationMap": true,
     "sourceMap": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node16"
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@shopify/shopify-app-react-router/server": [
+        "./node_modules/@shopify/shopify-app-react-router/dist/ts/server/index.d.ts"
+      ],
+      "@shopify/shopify-api/adapters/web-api": [
+        "./node_modules/@shopify/shopify-api/dist/ts/adapters/web-api/index.d.ts"
+      ]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
