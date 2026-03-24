@@ -20,6 +20,19 @@ function sessionTokenFromRequest(request: Request): string | undefined {
   return url.searchParams.get("id_token")?.trim() || undefined;
 }
 
+/** Resolves shop hostname from JWT `dest` (full URL or bare hostname). */
+function shopHostnameFromDest(dest: string): string | undefined {
+  try {
+    return new URL(dest).hostname;
+  } catch {
+    try {
+      return new URL(`https://${dest}`).hostname;
+    } catch {
+      return undefined;
+    }
+  }
+}
+
 function buildDecodeApi(config: MockBridgeAuthReflectConfig) {
   const appUrl = new URL(config.appUrl);
   const rawScheme = appUrl.protocol.replace(":", "") || "https";
@@ -81,7 +94,11 @@ export function withMockBridgeAdminAuthForReactRouter(
         return baseAdmin(request);
       }
 
-      const shop = new URL(dest).hostname;
+      const shop = shopHostnameFromDest(dest.trim());
+      if (!shop) {
+        return baseAdmin(request);
+      }
+
       const sessionId = reflectConfig.useOnlineTokens
         ? decodeApi.session.getJwtSessionId(shop, String(payload.sub))
         : decodeApi.session.getOfflineId(shop);

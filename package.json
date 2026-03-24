@@ -13,10 +13,6 @@
       "types": "./dist/auth/index.d.ts",
       "default": "./dist/auth/index.js"
     },
-    "./react-router": {
-      "types": "./dist/react-router/index.d.ts",
-      "default": "./dist/react-router/index.js"
-    },
     "./client": {
       "types": "./dist/client/mock-detector.d.ts",
       "default": "./dist/client/mock-detector.js"
@@ -35,8 +31,7 @@
     "start": "node dist/server/index.js",
     "watch": "tsc --watch",
     "clean": "rm -rf dist",
-    "prepare": "cd admin-frame && npm install --legacy-peer-deps && cd ../app-bridge && npm install && cd .. && npm run build",
-    "smoke:subpaths": "node -e \"require('./dist/auth'); require('./dist/react-router'); console.log('subpath require ok');\""
+    "prepare": "cd admin-frame && npm install --legacy-peer-deps && cd ../app-bridge && npm install && cd .. && npm run build"
   },
   "keywords": [
     "shopify",
