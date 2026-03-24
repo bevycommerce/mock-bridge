@@ -1,5 +1,5 @@
-import { shopifyApi, Session, type ApiVersion } from '@shopify/shopify-api';
-import type { shopifyApp } from '@shopify/shopify-app-react-router/server';
+import { shopifyApi, Session, type ApiVersion } from "@shopify/shopify-api";
+import type { shopifyApp } from "@shopify/shopify-app-react-router/server";
 
 type ShopifyAppInstance = ReturnType<typeof shopifyApp>;
 
@@ -14,18 +14,18 @@ export type MockBridgeAuthReflectConfig = {
 };
 
 function sessionTokenFromRequest(request: Request): string | undefined {
-  const auth = request.headers.get('authorization');
-  if (auth?.startsWith('Bearer ')) return auth.slice(7).trim();
+  const auth = request.headers.get("authorization");
+  if (auth?.startsWith("Bearer ")) return auth.slice(7).trim();
   const url = new URL(request.url);
-  return url.searchParams.get('id_token')?.trim() || undefined;
+  return url.searchParams.get("id_token")?.trim() || undefined;
 }
 
 function buildDecodeApi(config: MockBridgeAuthReflectConfig) {
   const appUrl = new URL(config.appUrl);
-  const rawScheme = appUrl.protocol.replace(':', '') || 'https';
-  const hostScheme = rawScheme === 'http' ? 'http' : 'https';
+  const rawScheme = appUrl.protocol.replace(":", "") || "https";
+  const hostScheme = rawScheme === "http" ? "http" : "https";
   return shopifyApi({
-    apiKey: config.apiKey || '',
+    apiKey: config.apiKey || "",
     apiSecretKey: config.apiSecretKey,
     apiVersion: config.apiVersion,
     scopes: config.scopes ?? [],
@@ -44,7 +44,7 @@ function buildDecodeApi(config: MockBridgeAuthReflectConfig) {
 export function withMockBridgeAdminAuthForReactRouter(
   shopify: ShopifyAppInstance,
   reflectConfig: MockBridgeAuthReflectConfig,
-): ShopifyAppInstance['authenticate'] {
+): ShopifyAppInstance["authenticate"] {
   const baseAdmin = shopify.authenticate.admin.bind(shopify.authenticate);
   const storage = shopify.sessionStorage;
 
@@ -53,12 +53,12 @@ export function withMockBridgeAdminAuthForReactRouter(
   }
 
   const decodeApi = buildDecodeApi(reflectConfig);
-  const scopeString = (reflectConfig.scopes ?? []).filter(Boolean).join(',');
+  const scopeString = (reflectConfig.scopes ?? []).filter(Boolean).join(",");
 
   return {
     ...shopify.authenticate,
     admin: async (request: Request) => {
-      if (process.env.SHOPIFY_MOCK_BRIDGE_AUTH !== '1') {
+      if (process.env.SHOPIFY_MOCK_BRIDGE_AUTH !== "1") {
         return baseAdmin(request);
       }
 
@@ -77,7 +77,7 @@ export function withMockBridgeAdminAuthForReactRouter(
       }
 
       const dest = payload.dest;
-      if (typeof dest !== 'string' || !payload.sub) {
+      if (typeof dest !== "string" || !payload.sub) {
         return baseAdmin(request);
       }
 
@@ -92,16 +92,16 @@ export function withMockBridgeAdminAuthForReactRouter(
         const mockSession = new Session({
           id: sessionId,
           shop,
-          state: 'mock-bridge-e2e',
+          state: "mock-bridge-e2e",
           isOnline: Boolean(reflectConfig.useOnlineTokens),
           scope: scopeString,
           accessToken:
-            process.env.SHOPIFY_MOCK_BRIDGE_ACCESS_TOKEN ?? 'mock-access-token',
+            process.env.SHOPIFY_MOCK_BRIDGE_ACCESS_TOKEN ?? "mock-access-token",
         });
         await storage.storeSession(mockSession);
       }
 
       return baseAdmin(request);
     },
-  } as ShopifyAppInstance['authenticate'];
+  } as ShopifyAppInstance["authenticate"];
 }
