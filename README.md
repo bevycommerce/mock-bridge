@@ -307,6 +307,8 @@ export async function authenticate(token: string) {
 
 #### Framework-Specific Examples
 
+**Shopify App React Router** (`authenticate.admin(request)`): see the dedicated guide **[docs/SHOPIFY_APP_REACT_ROUTER.md](./docs/SHOPIFY_APP_REACT_ROUTER.md)** and `@getverdict/mock-bridge/react-router`.
+
 **Next.js API Routes:**
 
 ```typescript
