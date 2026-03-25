@@ -86,6 +86,7 @@
   },
   "files": [
     "dist/",
+    "assets/",
     "admin-frame/dist/",
     "app-bridge/dist/"
   ],
