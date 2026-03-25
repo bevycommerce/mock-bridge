@@ -67,7 +67,7 @@ Point embedded App Bridge at your mock server and relax CSP for the mock admin o
 
 ## Runtime dependency
 
-The `withMockBridgeAdminAuthForReactRouter` helper (exported from `@getverdict/mock-bridge/auth`) loads **`@shopify/shopify-api` only** at runtime (for `shopifyApi`, `Session`, and `decodeSessionToken`). Your app must still install **`@shopify/shopify-app-react-router`** and peers (`react`, `react-dom`, `react-router`) as required by Shopify’s template.
+The helper imports `@shopify/shopify-api/adapters/web-api` before calling `shopifyApi` (same adapter as `@shopify/shopify-app-react-router/server`), so `shopifyApi` works even when your bundler loads mock-bridge before the framework entry. Your app must still install **`@shopify/shopify-app-react-router`** and peers (`react`, `react-dom`, `react-router`) as required by Shopify’s template.
 
 ## Install from npm or Git
 

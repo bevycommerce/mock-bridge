@@ -1,5 +1,6 @@
-import { shopifyApi, Session, type ApiVersion } from "@shopify/shopify-api";
-import type { shopifyApp } from "@shopify/shopify-app-react-router/server";
+import '@shopify/shopify-api/adapters/web-api';
+import { shopifyApi, Session, type ApiVersion } from '@shopify/shopify-api';
+import type { shopifyApp } from '@shopify/shopify-app-react-router/server';
 
 type ShopifyAppInstance = ReturnType<typeof shopifyApp>;
 
