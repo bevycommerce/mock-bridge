@@ -1,26 +1,30 @@
 import { v4 as uuidv4 } from 'uuid';
-import type { FeatureActionRequest } from '../../admin-frame/src/hooks/useMockBridge';
-import { type FeatureActionName, type FeatureActionPayload, type FeatureName } from '../../admin-frame/src/store/features';
 
-export function invokeFeature<F extends FeatureName, A extends FeatureActionName<F>, P extends FeatureActionPayload<F, A>>(feature: F, action: A, payload: P) {
+export function invokeFeature(feature: string, action: string, payload: unknown) {
   return new Promise((resolve, reject) => {
     const actionId = uuidv4();
 
-    const request: FeatureActionRequest<F, A, P> = {
+    const request = {
       feature,
       action,
       payload,
-    }
+    };
 
-    window.parent.postMessage({
-      type: 'FEATURE_ACTION_REQUEST',
-      action_id: actionId,
-      ...request,
-    }, '*');
+    const timeoutMs =
+      feature === 'resourcePicker' && action === 'open' ? 300_000 : 1_000;
+
+    window.parent.postMessage(
+      {
+        type: 'FEATURE_ACTION_REQUEST',
+        action_id: actionId,
+        ...request,
+      },
+      '*',
+    );
 
     const rejectTimeout = setTimeout(() => {
-      reject(new Error('Feature action timed out after 1 second'));
-    }, 1000);
+      reject(new Error(`Feature action timed out after ${timeoutMs} ms`));
+    }, timeoutMs);
 
     const handler = (event: MessageEvent) => {
       if (event.data && event.data.type === 'FEATURE_ACTION_RESPONSE') {

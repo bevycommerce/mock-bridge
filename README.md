@@ -58,7 +58,7 @@
 | `shopify.environment` | ✅ Supported | `embedded`, `mobile`, `pos` |
 | `shopify.user` | ✅ Supported | Returns mock user object |
 | `shopify.scopes` | 🔶 Stub | Returns mock data |
-| `shopify.resourcePicker` | 🔶 Stub | Returns empty array |
+| `shopify.resourcePicker` | ✅ Mock UI | Opens a mock admin modal; catalog from [`/api/resource-picker-catalog`](docs/RESOURCE_PICKER.md) (customizable via `resourcePickerCatalog` on the server) |
 | `shopify.picker` | 🔶 Stub | Returns empty selection |
 | `shopify.scanner` | 🔶 Stub | Returns mock scan data |
 | `shopify.pos` | 🔶 Stub | Cart API with mock data |

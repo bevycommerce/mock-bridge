@@ -21,6 +21,10 @@ import { picker } from "./features/picker";
 import { app } from "./features/app";
 import { loading } from "./features/loading";
 import { navMenu } from "./features/nav-menu";
+import {
+  bridgePayloadFromLegacyResourcePickerOptions,
+  openMockResourcePickerFromBridge,
+} from "./resource-picker-bridge";
 
 (function (window) {
   'use strict';
@@ -119,21 +123,35 @@ import { navMenu } from "./features/nav-menu";
         return {
           dispatch: function (action: any) {
             if (action === Actions.ResourcePicker.Action.OPEN) {
-              // Mock selection after a delay
-              setTimeout(() => {
-                const mockSelection = {
-                  selection: [{
-                    id: 'gid://shopify/Product/123456',
-                    title: 'Mock Product',
-                    handle: 'mock-product',
-                  }],
-                };
-                subscribers.forEach(callback => {
-                  if (callback.action === Actions.ResourcePicker.Action.SELECT) {
-                    callback.handler(mockSelection);
+              void openMockResourcePickerFromBridge(
+                bridgePayloadFromLegacyResourcePickerOptions({
+                  type: options?.type,
+                  multiple: options?.multiple,
+                  selectionIds: options?.selectionIds,
+                }),
+              )
+                .then((result) => {
+                  if (result.cancelled) {
+                    subscribers.forEach((callback: { action: string; handler: (p: unknown) => void }) => {
+                      if (callback.action === Actions.ResourcePicker.Action.CANCEL) {
+                        callback.handler({});
+                      }
+                    });
+                  } else {
+                    subscribers.forEach((callback: { action: string; handler: (p: unknown) => void }) => {
+                      if (callback.action === Actions.ResourcePicker.Action.SELECT) {
+                        callback.handler({ selection: result.selection });
+                      }
+                    });
                   }
+                })
+                .catch(() => {
+                  subscribers.forEach((callback: { action: string; handler: (p: unknown) => void }) => {
+                    if (callback.action === Actions.ResourcePicker.Action.CANCEL) {
+                      callback.handler({});
+                    }
+                  });
                 });
-              }, 100);
             }
           },
           subscribe: function (action: any, handler: any) {
@@ -420,7 +438,7 @@ import { navMenu } from "./features/nav-menu";
   const detectMockServerUrl = (): string => {
     // Try to get from current script src
     const scripts = document.querySelectorAll('script[src*="app-bridge.js"]');
-    for (const script of scripts) {
+    for (const script of Array.from(scripts)) {
       const src = (script as HTMLScriptElement).src;
       if (src) {
         const url = new URL(src);

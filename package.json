@@ -16,6 +16,10 @@
     "./client": {
       "types": "./dist/client/mock-detector.d.ts",
       "default": "./dist/client/mock-detector.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
     }
   },
   "bin": {
@@ -48,13 +52,25 @@
   },
   "peerDependencies": {
     "@shopify/shopify-api": "^11.0.0 || ^12.0.0 || ^13.0.0",
-    "@shopify/shopify-app-react-router": "^1.0.0"
+    "@shopify/shopify-app-react-router": "^1.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0",
+    "react-router": "^7.6.2"
   },
   "peerDependenciesMeta": {
     "@shopify/shopify-api": {
       "optional": true
     },
     "@shopify/shopify-app-react-router": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "react-router": {
       "optional": true
     }
   },
@@ -71,6 +87,7 @@
   "devDependencies": {
     "@shopify/shopify-api": "^13.0.0",
     "@shopify/shopify-app-react-router": "^1.2.0",
+    "@types/react": "^19.0.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",
@@ -78,6 +95,9 @@
     "@types/uuid": "^9.0.7",
     "concurrently": "^9.2.1",
     "dotenv": "^17.2.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router": "^7.13.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
