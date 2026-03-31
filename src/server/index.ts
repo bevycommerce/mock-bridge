@@ -7,7 +7,6 @@ import { TokenGenerator } from '../auth/token-generator';
 import { MockShopifyAdminConfig, MockShop, MockUser } from '../types';
 import { STANDARD_MOCK_CLIENT_ID, STANDARD_MOCK_SECRET } from '../auth/constants';
 import {
-  flattenVariants,
   getDefaultResourcePickerCatalog,
   mergeResourcePickerCatalog,
   type ResourcePickerCatalogResponse,
@@ -137,8 +136,7 @@ export class MockShopifyAdminServer {
       const q = String(req.query.q ?? '')
         .trim()
         .toLowerCase();
-      const { products, collections } = this.resourcePickerCatalog;
-      const variants = flattenVariants(products);
+      const { products, variants, collections } = this.resourcePickerCatalog;
 
       const match = (s: string) => !q || s.toLowerCase().includes(q);
 

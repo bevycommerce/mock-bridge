@@ -105,8 +105,7 @@ class MockShopifyAdminServer {
             const q = String(req.query.q ?? '')
                 .trim()
                 .toLowerCase();
-            const { products, collections } = this.resourcePickerCatalog;
-            const variants = (0, mock_resource_picker_catalog_1.flattenVariants)(products);
+            const { products, variants, collections } = this.resourcePickerCatalog;
             const match = (s) => !q || s.toLowerCase().includes(q);
             res.json({
                 products: products.filter((p) => match(p.title) || match(p.handle) || match(p.id)),

@@ -30,6 +30,7 @@ export type MockResourcePickerProduct = {
 
 export type ResourcePickerCatalogResponse = {
   products: MockResourcePickerProduct[];
+  variants: MockResourcePickerVariant[];
   collections: MockResourcePickerCollection[];
 };
 
@@ -110,7 +111,11 @@ export function getDefaultResourcePickerCatalog(): ResourcePickerCatalogResponse
     },
   ];
 
-  return { products, collections };
+  return {
+    products,
+    variants: flattenVariants(products),
+    collections,
+  };
 }
 
 export function mergeResourcePickerCatalog(
@@ -118,8 +123,15 @@ export function mergeResourcePickerCatalog(
   override?: Partial<ResourcePickerCatalogResponse> | null,
 ): ResourcePickerCatalogResponse {
   if (!override) return base;
+  const products = override.products?.length ? override.products : base.products;
+  const collections = override.collections?.length ? override.collections : base.collections;
+  const variants = override.variants?.length
+    ? override.variants
+    : flattenVariants(products);
+
   return {
-    products: override.products?.length ? override.products : base.products,
-    collections: override.collections?.length ? override.collections : base.collections,
+    products,
+    variants,
+    collections,
   };
 }

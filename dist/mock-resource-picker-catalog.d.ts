@@ -26,6 +26,7 @@ export type MockResourcePickerProduct = {
 };
 export type ResourcePickerCatalogResponse = {
     products: MockResourcePickerProduct[];
+    variants: MockResourcePickerVariant[];
     collections: MockResourcePickerCollection[];
 };
 /** Flattened variant rows for variant-only picker */

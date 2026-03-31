@@ -80,14 +80,24 @@ function getDefaultResourcePickerCatalog() {
             handle: 'mock-sale',
         },
     ];
-    return { products, collections };
+    return {
+        products,
+        variants: flattenVariants(products),
+        collections,
+    };
 }
 function mergeResourcePickerCatalog(base, override) {
     if (!override)
         return base;
+    const products = override.products?.length ? override.products : base.products;
+    const collections = override.collections?.length ? override.collections : base.collections;
+    const variants = override.variants?.length
+        ? override.variants
+        : flattenVariants(products);
     return {
-        products: override.products?.length ? override.products : base.products,
-        collections: override.collections?.length ? override.collections : base.collections,
+        products,
+        variants,
+        collections,
     };
 }
 //# sourceMappingURL=mock-resource-picker-catalog.js.map
