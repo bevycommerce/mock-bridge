@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-export function invokeFeature(feature: string, action: string, payload: unknown) {
+export function invokeFeature(feature: string, action: string, payload: unknown, timeoutMs = 1_000) {
   return new Promise((resolve, reject) => {
     const actionId = uuidv4();
 
@@ -9,9 +9,6 @@ export function invokeFeature(feature: string, action: string, payload: unknown)
       action,
       payload,
     };
-
-    const timeoutMs =
-      feature === 'resourcePicker' && action === 'open' ? 300_000 : 1_000;
 
     window.parent.postMessage(
       {
@@ -23,6 +20,7 @@ export function invokeFeature(feature: string, action: string, payload: unknown)
     );
 
     const rejectTimeout = setTimeout(() => {
+      window.removeEventListener('message', handler);
       reject(new Error(`Feature action timed out after ${timeoutMs} ms`));
     }, timeoutMs);
 

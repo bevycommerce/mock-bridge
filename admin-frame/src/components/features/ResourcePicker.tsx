@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useResourcePickerFeatureStore } from '../../store/features/resource-picker';
 import type { ResourcePickerType } from '../../types/resource-picker';
@@ -64,13 +64,6 @@ function ResourcePickerModal() {
       secondary: c.handle,
     }));
   }, [catalog, pickerType]);
-
-  const onToggle = useCallback(
-    (id: string) => {
-      toggleId(id);
-    },
-    [toggleId],
-  );
 
   if (!isOpen) {
     return null;
@@ -189,7 +182,7 @@ function ResourcePickerModal() {
                   type={multi ? 'checkbox' : 'radio'}
                   name={multi ? undefined : 'mock-resource-picker-row'}
                   checked={selectedIds.has(row.id)}
-                  onChange={() => onToggle(row.id)}
+                  onChange={() => toggleId(row.id)}
                   style={{ marginTop: 3 }}
                 />
                 <div style={{ flex: 1 }}>
@@ -211,7 +204,7 @@ function ResourcePickerModal() {
         >
           <button
             type="button"
-            onClick={() => cancel()}
+            onClick={cancel}
             style={{
               padding: '10px 16px',
               borderRadius: 8,
@@ -224,7 +217,7 @@ function ResourcePickerModal() {
           </button>
           <button
             type="button"
-            onClick={() => confirm()}
+            onClick={confirm}
             disabled={loading || selectedIds.size === 0}
             style={{
               padding: '10px 16px',

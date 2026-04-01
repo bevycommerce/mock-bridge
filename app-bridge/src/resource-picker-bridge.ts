@@ -18,6 +18,7 @@ export async function openMockResourcePickerFromBridge(
     'resourcePicker',
     'open',
     options,
+    300_000,
   )) as ResourcePickerBridgeResult;
   if (!raw || typeof raw !== 'object') {
     return { cancelled: true, selection: [] };

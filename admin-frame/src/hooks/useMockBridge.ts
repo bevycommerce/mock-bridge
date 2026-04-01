@@ -148,7 +148,8 @@ export function useMockBridge() {
 
           iframeRef.current?.contentWindow?.postMessage({
             type: 'FEATURE_ACTION_RESPONSE',
-            action_id: event.data.action_id,
+            action_id: actionId,
+            payload: undefined,
           }, '*');
         }
       }

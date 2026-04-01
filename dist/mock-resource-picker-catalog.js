@@ -8,13 +8,7 @@ exports.getDefaultResourcePickerCatalog = getDefaultResourcePickerCatalog;
 exports.mergeResourcePickerCatalog = mergeResourcePickerCatalog;
 /** Flattened variant rows for variant-only picker */
 function flattenVariants(products) {
-    const out = [];
-    for (const p of products) {
-        for (const v of p.variants) {
-            out.push(v);
-        }
-    }
-    return out;
+    return products.flatMap((p) => p.variants);
 }
 function getDefaultResourcePickerCatalog() {
     const products = [

@@ -36,6 +36,7 @@ function closedPickerState(): Pick<
   | 'iframeWindow'
   | 'options'
   | 'query'
+  | 'loading'
   | 'catalog'
   | 'selectedIds'
   | 'error'
@@ -46,10 +47,32 @@ function closedPickerState(): Pick<
     iframeWindow: null,
     options: null,
     query: '',
+    loading: false,
     catalog: null,
     selectedIds: new Set<string>(),
     error: null,
   };
+}
+
+function fetchCatalog(
+  q: string,
+  set: (partial: Partial<ResourcePickerState>) => void,
+) {
+  fetch(`/api/resource-picker-catalog?q=${encodeURIComponent(q)}`)
+    .then((r) => {
+      if (!r.ok) throw new Error(`Catalog ${r.status}`);
+      return r.json() as Promise<ResourcePickerCatalogApiResponse>;
+    })
+    .then((catalog) => {
+      set({ catalog, loading: false, error: null });
+    })
+    .catch((e: Error) => {
+      set({
+        loading: false,
+        error: e.message || 'Failed to load catalog',
+        catalog: emptyCatalog,
+      });
+    });
 }
 
 function selectionRowsForProduct(p: MockResourcePickerProduct): ResourcePickerSelectionRow {
@@ -85,17 +108,7 @@ function selectionRowForCollection(c: MockResourcePickerCollection): ResourcePic
 
 export const useResourcePickerFeatureStore = create(
   combine(
-    {
-      isOpen: false,
-      actionId: null,
-      iframeWindow: null,
-      options: null,
-      query: '',
-      loading: false,
-      error: null,
-      catalog: null,
-      selectedIds: new Set<string>(),
-    } as ResourcePickerState,
+    closedPickerState() as ResourcePickerState,
     (set, get) => ({
       /** Called from mock admin host when iframe requests the picker (see useMockBridge). */
       openFromBridge: (payload: {
@@ -116,37 +129,12 @@ export const useResourcePickerFeatureStore = create(
           selectedIds: preset,
         });
 
-        const q = '';
-        fetch(`/api/resource-picker-catalog?q=${encodeURIComponent(q)}`)
-          .then((r) => {
-            if (!r.ok) throw new Error(`Catalog ${r.status}`);
-            return r.json() as Promise<ResourcePickerCatalogApiResponse>;
-          })
-          .then((catalog) => {
-            set({ catalog, loading: false, error: null });
-          })
-          .catch((e: Error) => {
-            set({
-              loading: false,
-              error: e.message || 'Failed to load catalog',
-              catalog: emptyCatalog,
-            });
-          });
+        fetchCatalog('', set);
       },
 
       setQuery: (query: string) => {
         set({ query, loading: true, error: null });
-        fetch(`/api/resource-picker-catalog?q=${encodeURIComponent(query)}`)
-          .then((r) => {
-            if (!r.ok) throw new Error(`Catalog ${r.status}`);
-            return r.json() as Promise<ResourcePickerCatalogApiResponse>;
-          })
-          .then((catalog) => {
-            set({ catalog, loading: false });
-          })
-          .catch((e: Error) => {
-            set({ loading: false, error: e.message });
-          });
+        fetchCatalog(query, set);
       },
 
       toggleId: (id: string) =>

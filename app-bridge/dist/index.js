@@ -49,7 +49,7 @@
   var v4_default = v4;
 
   // src/invokeFeature.ts
-  function invokeFeature(feature, action, payload) {
+  function invokeFeature(feature, action, payload, timeoutMs = 1e3) {
     return new Promise((resolve, reject) => {
       const actionId = v4_default();
       const request = {
@@ -57,7 +57,6 @@
         action,
         payload
       };
-      const timeoutMs = feature === "resourcePicker" && action === "open" ? 3e5 : 1e3;
       window.parent.postMessage(
         {
           type: "FEATURE_ACTION_REQUEST",
@@ -67,6 +66,7 @@
         "*"
       );
       const rejectTimeout = setTimeout(() => {
+        window.removeEventListener("message", handler);
         reject(new Error(`Feature action timed out after ${timeoutMs} ms`));
       }, timeoutMs);
       const handler = (event) => {
@@ -388,7 +388,8 @@
     const raw = await invokeFeature(
       "resourcePicker",
       "open",
-      options
+      options,
+      3e5
     );
     if (!raw || typeof raw !== "object") {
       return { cancelled: true, selection: [] };
@@ -415,16 +416,13 @@
   // src/features/resource-picker.ts
   function resourcePicker() {
     return async (options) => {
-      const payload = {
-        type: options?.type === "variant" ? "variant" : options?.type === "collection" ? "collection" : "product",
+      const payload = bridgePayloadFromLegacyResourcePickerOptions({
+        type: options?.type,
         multiple: options?.multiple === true,
         selectionIds: options?.selectionIds
-      };
+      });
       const result = await openMockResourcePickerFromBridge(payload);
-      if (result.cancelled) {
-        return [];
-      }
-      return result.selection;
+      return result.cancelled ? [] : result.selection;
     };
   }
 

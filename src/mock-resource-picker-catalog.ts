@@ -36,13 +36,7 @@ export type ResourcePickerCatalogResponse = {
 
 /** Flattened variant rows for variant-only picker */
 export function flattenVariants(products: MockResourcePickerProduct[]): MockResourcePickerVariant[] {
-  const out: MockResourcePickerVariant[] = [];
-  for (const p of products) {
-    for (const v of p.variants) {
-      out.push(v);
-    }
-  }
-  return out;
+  return products.flatMap((p) => p.variants);
 }
 
 export function getDefaultResourcePickerCatalog(): ResourcePickerCatalogResponse {
