@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.withMockBridgeAdminAuthForReactRouter = withMockBridgeAdminAuthForReactRouter;
+require("@shopify/shopify-api/adapters/web-api");
 const shopify_api_1 = require("@shopify/shopify-api");
 function sessionTokenFromRequest(request) {
     const auth = request.headers.get("authorization");
