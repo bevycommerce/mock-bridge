@@ -1,7 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useResourcePickerFeatureStore } from '../../store/features/resource-picker';
 import type { ResourcePickerType } from '../../types/resource-picker';
+
+function focusableElementsIn(container: HTMLElement): HTMLElement[] {
+  const selector =
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter((el) => {
+    if (el.hasAttribute('disabled')) return false;
+    return el.getClientRects().length > 0;
+  });
+}
 
 const typeLabels: Record<ResourcePickerType, string> = {
   product: 'Products',
@@ -22,6 +31,9 @@ function ResourcePickerModal() {
   const cancel = useResourcePickerFeatureStore((s) => s.cancel);
   const confirm = useResourcePickerFeatureStore((s) => s.confirm);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   const [localQuery, setLocalQuery] = useState('');
 
   useEffect(() => {
@@ -39,6 +51,48 @@ function ResourcePickerModal() {
     }, 250);
     return () => window.clearTimeout(t);
   }, [localQuery, isOpen, query, setQuery]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.activeElement;
+    const id = window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+    });
+    return () => {
+      window.cancelAnimationFrame(id);
+      if (previous instanceof HTMLElement && document.body.contains(previous)) {
+        previous.focus();
+      }
+    };
+  }, [isOpen]);
+
+  const handleDialogKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        cancel();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const root = dialogRef.current;
+      if (!root) return;
+      const nodes = focusableElementsIn(root);
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey) {
+        if (active === first || !root.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !root.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      }
+    },
+    [cancel],
+  );
 
   const pickerType: ResourcePickerType = options?.type ?? 'product';
 
@@ -93,6 +147,8 @@ function ResourcePickerModal() {
       }}
     >
       <div
+        id="mock-resource-picker-dialog"
+        ref={dialogRef}
         style={{
           background: '#fff',
           borderRadius: '12px',
@@ -105,6 +161,7 @@ function ResourcePickerModal() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="mock-resource-picker-title"
+        onKeyDown={handleDialogKeyDown}
       >
         <header
           style={{
@@ -130,6 +187,7 @@ function ResourcePickerModal() {
           </label>
           <input
             id="mock-rp-search"
+            ref={searchInputRef}
             type="search"
             value={localQuery}
             onChange={(e) => setLocalQuery(e.target.value)}

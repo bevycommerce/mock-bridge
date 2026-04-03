@@ -119,7 +119,17 @@ import {
         Collection: 'collection',
       },
       create: function (app: any, options: any) {
-        const subscribers = new Map();
+        const subscribers = new Map<
+          number,
+          { action: string; handler: (p: unknown) => void }
+        >();
+        const notifySubscribers = (action: string, payload: unknown) => {
+          subscribers.forEach((callback) => {
+            if (callback.action === action) {
+              callback.handler(payload);
+            }
+          });
+        };
         return {
           dispatch: function (action: any) {
             if (action === Actions.ResourcePicker.Action.OPEN) {
@@ -132,25 +142,15 @@ import {
               )
                 .then((result) => {
                   if (result.cancelled) {
-                    subscribers.forEach((callback: { action: string; handler: (p: unknown) => void }) => {
-                      if (callback.action === Actions.ResourcePicker.Action.CANCEL) {
-                        callback.handler({});
-                      }
-                    });
+                    notifySubscribers(Actions.ResourcePicker.Action.CANCEL, {});
                   } else {
-                    subscribers.forEach((callback: { action: string; handler: (p: unknown) => void }) => {
-                      if (callback.action === Actions.ResourcePicker.Action.SELECT) {
-                        callback.handler({ selection: result.selection });
-                      }
+                    notifySubscribers(Actions.ResourcePicker.Action.SELECT, {
+                      selection: result.selection,
                     });
                   }
                 })
                 .catch(() => {
-                  subscribers.forEach((callback: { action: string; handler: (p: unknown) => void }) => {
-                    if (callback.action === Actions.ResourcePicker.Action.CANCEL) {
-                      callback.handler({});
-                    }
-                  });
+                  notifySubscribers(Actions.ResourcePicker.Action.CANCEL, {});
                 });
             }
           },

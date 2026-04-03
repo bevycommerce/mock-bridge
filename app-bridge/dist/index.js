@@ -70,12 +70,12 @@
         reject(new Error(`Feature action timed out after ${timeoutMs} ms`));
       }, timeoutMs);
       const handler = (event) => {
-        if (event.data && event.data.type === "FEATURE_ACTION_RESPONSE") {
-          if (event.data.action_id !== actionId) return;
-          resolve(event.data.payload);
-          window.removeEventListener("message", handler);
-          clearTimeout(rejectTimeout);
-        }
+        if (event.source !== window.parent) return;
+        if (!event.data || event.data.type !== "FEATURE_ACTION_RESPONSE") return;
+        if (event.data.action_id !== actionId) return;
+        resolve(event.data.payload);
+        window.removeEventListener("message", handler);
+        clearTimeout(rejectTimeout);
       };
       window.addEventListener("message", handler);
     });
@@ -599,7 +599,11 @@
   function loading() {
     return (isLoading) => {
       console.log("[MockAppBridge] Loading:", isLoading);
-      invokeFeature("loading", "setLoading", { isLoading: Boolean(isLoading) });
+      void invokeFeature("loading", "setLoading", { isLoading: Boolean(isLoading) }).catch(
+        (err) => {
+          console.warn("[MockAppBridge] loading/setLoading failed:", err);
+        }
+      );
     };
   }
 
@@ -766,6 +770,13 @@
         },
         create: function(app2, options) {
           const subscribers = /* @__PURE__ */ new Map();
+          const notifySubscribers = (action, payload) => {
+            subscribers.forEach((callback) => {
+              if (callback.action === action) {
+                callback.handler(payload);
+              }
+            });
+          };
           return {
             dispatch: function(action) {
               if (action === Actions.ResourcePicker.Action.OPEN) {
@@ -777,24 +788,14 @@
                   })
                 ).then((result) => {
                   if (result.cancelled) {
-                    subscribers.forEach((callback) => {
-                      if (callback.action === Actions.ResourcePicker.Action.CANCEL) {
-                        callback.handler({});
-                      }
-                    });
+                    notifySubscribers(Actions.ResourcePicker.Action.CANCEL, {});
                   } else {
-                    subscribers.forEach((callback) => {
-                      if (callback.action === Actions.ResourcePicker.Action.SELECT) {
-                        callback.handler({ selection: result.selection });
-                      }
+                    notifySubscribers(Actions.ResourcePicker.Action.SELECT, {
+                      selection: result.selection
                     });
                   }
                 }).catch(() => {
-                  subscribers.forEach((callback) => {
-                    if (callback.action === Actions.ResourcePicker.Action.CANCEL) {
-                      callback.handler({});
-                    }
-                  });
+                  notifySubscribers(Actions.ResourcePicker.Action.CANCEL, {});
                 });
               }
             },

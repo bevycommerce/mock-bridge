@@ -47,10 +47,15 @@ function AppBridgeScript({ apiKey, src }) {
     const navigate = (0, react_router_1.useNavigate)();
     (0, react_1.useEffect)(() => {
         const handleNavigate = (event) => {
-            const href = event.target?.getAttribute('href');
-            if (href) {
+            const t = event.target;
+            if (!t || !(t instanceof Element))
+                return;
+            const anchor = t instanceof HTMLAnchorElement ? t : t.closest('a');
+            if (!(anchor instanceof HTMLAnchorElement))
+                return;
+            const href = anchor.href;
+            if (href)
                 navigate(href);
-            }
         };
         document.addEventListener('shopify:navigate', handleNavigate);
         return () => {

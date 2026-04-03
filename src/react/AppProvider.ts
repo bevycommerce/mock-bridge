@@ -31,10 +31,13 @@ function AppBridgeScript({ apiKey, src }: { apiKey: string; src: string }) {
 
   useEffect(() => {
     const handleNavigate = (event: Event) => {
-      const href = (event.target as HTMLElement)?.getAttribute('href');
-      if (href) {
-        navigate(href);
-      }
+      const t = event.target;
+      if (!t || !(t instanceof Element)) return;
+      const anchor =
+        t instanceof HTMLAnchorElement ? t : t.closest('a');
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      const href = anchor.href;
+      if (href) navigate(href);
     };
 
     document.addEventListener('shopify:navigate', handleNavigate);

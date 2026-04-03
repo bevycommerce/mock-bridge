@@ -136,21 +136,40 @@ export function useMockBridge() {
             return;
           }
 
-          const featureStore = getFeatureStore(feature as FeatureName);
-          const state = featureStore.getState() as Record<string, unknown>;
-          const actionFn = state[action as string];
+          const respond = (body: {
+            payload: unknown;
+            error?: { code: string; message: string };
+          }) => {
+            iframeRef.current?.contentWindow?.postMessage(
+              {
+                type: 'FEATURE_ACTION_RESPONSE',
+                action_id: actionId,
+                payload: body.payload,
+                ...(body.error && { error: body.error }),
+              },
+              '*',
+            );
+          };
 
-          if (typeof actionFn === 'function') {
-            (actionFn as (payload: unknown) => void)(payload);
-          } else {
-            console.warn('[MockAdmin] Unknown feature action:', action);
+          try {
+            const featureStore = getFeatureStore(feature as FeatureName);
+            const state = featureStore.getState() as Record<string, unknown>;
+            const actionFn = state[action as string];
+
+            if (typeof actionFn === 'function') {
+              (actionFn as (payload: unknown) => void)(payload);
+            } else {
+              console.warn('[MockAdmin] Unknown feature action:', action);
+            }
+            respond({ payload: undefined });
+          } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            console.warn('[MockAdmin] Feature action failed:', message);
+            respond({
+              payload: undefined,
+              error: { code: 'FEATURE_ACTION_FAILED', message },
+            });
           }
-
-          iframeRef.current?.contentWindow?.postMessage({
-            type: 'FEATURE_ACTION_RESPONSE',
-            action_id: actionId,
-            payload: undefined,
-          }, '*');
         }
       }
     }

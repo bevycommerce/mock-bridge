@@ -1,3 +1,10 @@
+import type {
+  MockResourcePickerCollection,
+  MockResourcePickerProduct,
+  MockResourcePickerVariant,
+  ResourcePickerCatalogResponse,
+} from '../../../src/mock-resource-picker-catalog';
+
 export type ResourcePickerType = 'product' | 'variant' | 'collection';
 
 /** Payload sent from embedded app (App Bridge) when opening the picker */
@@ -7,37 +14,14 @@ export type ResourcePickerOpenOptions = {
   selectionIds?: string[];
 };
 
-export type MockResourcePickerCollection = {
-  id: string;
-  title: string;
-  handle: string;
+export type {
+  MockResourcePickerCollection,
+  MockResourcePickerProduct,
+  MockResourcePickerVariant,
 };
 
-export type MockResourcePickerVariant = {
-  id: string;
-  title: string;
-  displayName: string;
-  price: string;
-  sku?: string;
-  inventoryQuantity?: number;
-  productId: string;
-  productTitle: string;
-  productHandle: string;
-};
-
-export type MockResourcePickerProduct = {
-  id: string;
-  title: string;
-  handle: string;
-  status: string;
-  variants: MockResourcePickerVariant[];
-};
-
-export type ResourcePickerCatalogApiResponse = {
-  products: MockResourcePickerProduct[];
-  variants: MockResourcePickerVariant[];
-  collections: MockResourcePickerCollection[];
-};
+/** Same shape as `ResourcePickerCatalogResponse` from the shared catalog module. */
+export type ResourcePickerCatalogApiResponse = ResourcePickerCatalogResponse;
 
 /** Selection rows returned to the iframe (product / variant / collection) */
 export type ResourcePickerSelectionRow =

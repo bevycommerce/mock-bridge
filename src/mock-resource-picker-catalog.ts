@@ -117,11 +117,11 @@ export function mergeResourcePickerCatalog(
   override?: Partial<ResourcePickerCatalogResponse> | null,
 ): ResourcePickerCatalogResponse {
   if (!override) return base;
-  const products = override.products?.length ? override.products : base.products;
-  const collections = override.collections?.length ? override.collections : base.collections;
-  const variants = override.variants?.length
-    ? override.variants
-    : flattenVariants(products);
+  const products = override.products !== undefined ? override.products : base.products;
+  const collections =
+    override.collections !== undefined ? override.collections : base.collections;
+  const variants =
+    override.variants !== undefined ? override.variants : flattenVariants(products);
 
   return {
     products,
