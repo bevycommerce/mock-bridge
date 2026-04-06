@@ -49,7 +49,7 @@
   var v4_default = v4;
 
   // src/invokeFeature.ts
-  function invokeFeature(feature, action, payload) {
+  function invokeFeature(feature, action, payload, timeoutMs = 1e3) {
     return new Promise((resolve, reject) => {
       const actionId = v4_default();
       const request = {
@@ -57,21 +57,25 @@
         action,
         payload
       };
-      window.parent.postMessage({
-        type: "FEATURE_ACTION_REQUEST",
-        action_id: actionId,
-        ...request
-      }, "*");
+      window.parent.postMessage(
+        {
+          type: "FEATURE_ACTION_REQUEST",
+          action_id: actionId,
+          ...request
+        },
+        "*"
+      );
       const rejectTimeout = setTimeout(() => {
-        reject(new Error("Feature action timed out after 1 second"));
-      }, 1e3);
+        window.removeEventListener("message", handler);
+        reject(new Error(`Feature action timed out after ${timeoutMs} ms`));
+      }, timeoutMs);
       const handler = (event) => {
-        if (event.data && event.data.type === "FEATURE_ACTION_RESPONSE") {
-          if (event.data.action_id !== actionId) return;
-          resolve(event.data.payload);
-          window.removeEventListener("message", handler);
-          clearTimeout(rejectTimeout);
-        }
+        if (event.source !== window.parent) return;
+        if (!event.data || event.data.type !== "FEATURE_ACTION_RESPONSE") return;
+        if (event.data.action_id !== actionId) return;
+        resolve(event.data.payload);
+        window.removeEventListener("message", handler);
+        clearTimeout(rejectTimeout);
       };
       window.addEventListener("message", handler);
     });
@@ -379,11 +383,46 @@
     };
   }
 
+  // src/resource-picker-bridge.ts
+  async function openMockResourcePickerFromBridge(options) {
+    const raw = await invokeFeature(
+      "resourcePicker",
+      "open",
+      options,
+      3e5
+    );
+    if (!raw || typeof raw !== "object") {
+      return { cancelled: true, selection: [] };
+    }
+    return {
+      cancelled: Boolean(raw.cancelled),
+      selection: Array.isArray(raw.selection) ? raw.selection : []
+    };
+  }
+  function bridgePayloadFromLegacyResourcePickerOptions(options) {
+    let type = "product";
+    if (options?.type === "variant" || options?.type === "product_variant") {
+      type = "variant";
+    } else if (options?.type === "collection") {
+      type = "collection";
+    }
+    return {
+      type,
+      multiple: options?.multiple,
+      selectionIds: options?.selectionIds
+    };
+  }
+
   // src/features/resource-picker.ts
   function resourcePicker() {
     return async (options) => {
-      console.log("[MockAppBridge] Resource picker opened with options:", options);
-      return Promise.resolve([]);
+      const payload = bridgePayloadFromLegacyResourcePickerOptions({
+        type: options?.type,
+        multiple: options?.multiple === true,
+        selectionIds: options?.selectionIds
+      });
+      const result = await openMockResourcePickerFromBridge(payload);
+      return result.cancelled ? [] : result.selection;
     };
   }
 
@@ -560,7 +599,11 @@
   function loading() {
     return (isLoading) => {
       console.log("[MockAppBridge] Loading:", isLoading);
-      invokeFeature("loading", "setLoading", { isLoading });
+      void invokeFeature("loading", "setLoading", { isLoading: Boolean(isLoading) }).catch(
+        (err) => {
+          console.warn("[MockAppBridge] loading/setLoading failed:", err);
+        }
+      );
     };
   }
 
@@ -727,23 +770,33 @@
         },
         create: function(app2, options) {
           const subscribers = /* @__PURE__ */ new Map();
+          const notifySubscribers = (action, payload) => {
+            subscribers.forEach((callback) => {
+              if (callback.action === action) {
+                callback.handler(payload);
+              }
+            });
+          };
           return {
             dispatch: function(action) {
               if (action === Actions.ResourcePicker.Action.OPEN) {
-                setTimeout(() => {
-                  const mockSelection = {
-                    selection: [{
-                      id: "gid://shopify/Product/123456",
-                      title: "Mock Product",
-                      handle: "mock-product"
-                    }]
-                  };
-                  subscribers.forEach((callback) => {
-                    if (callback.action === Actions.ResourcePicker.Action.SELECT) {
-                      callback.handler(mockSelection);
-                    }
-                  });
-                }, 100);
+                void openMockResourcePickerFromBridge(
+                  bridgePayloadFromLegacyResourcePickerOptions({
+                    type: options?.type,
+                    multiple: options?.multiple,
+                    selectionIds: options?.selectionIds
+                  })
+                ).then((result) => {
+                  if (result.cancelled) {
+                    notifySubscribers(Actions.ResourcePicker.Action.CANCEL, {});
+                  } else {
+                    notifySubscribers(Actions.ResourcePicker.Action.SELECT, {
+                      selection: result.selection
+                    });
+                  }
+                }).catch(() => {
+                  notifySubscribers(Actions.ResourcePicker.Action.CANCEL, {});
+                });
               }
             },
             subscribe: function(action, handler) {
@@ -975,7 +1028,7 @@
     let mockServerUrl = "";
     const detectMockServerUrl = () => {
       const scripts = document.querySelectorAll('script[src*="app-bridge.js"]');
-      for (const script of scripts) {
+      for (const script of Array.from(scripts)) {
         const src = script.src;
         if (src) {
           const url = new URL(src);

@@ -1,3 +1,4 @@
+import type { ResourcePickerCatalogResponse } from '../mock-resource-picker-catalog';
 /**
  * Configuration for how Admin API requests are handled
  * - 'mock': Return mock data from the mock server (default, works offline)
@@ -23,6 +24,8 @@ export interface MockShopifyAdminConfig {
     debug?: boolean;
     adminApi?: AdminApiConfig;
     proxy?: boolean;
+    /** Optional override for mock resource picker catalog (merged with defaults). */
+    resourcePickerCatalog?: Partial<ResourcePickerCatalogResponse>;
 }
 export interface MockWebhook {
     topic: string;

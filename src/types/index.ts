@@ -1,3 +1,5 @@
+import type { ResourcePickerCatalogResponse } from '../mock-resource-picker-catalog';
+
 /**
  * Configuration for how Admin API requests are handled
  * - 'mock': Return mock data from the mock server (default, works offline)
@@ -23,6 +25,8 @@ export interface MockShopifyAdminConfig {
   debug?: boolean;
   adminApi?: AdminApiConfig;  // How to handle Admin API requests (default: 'mock')
   proxy?: boolean;  // Reverse-proxy the app through mock-bridge for same-origin iframe (Cypress support)
+  /** Optional override for mock resource picker catalog (merged with defaults). */
+  resourcePickerCatalog?: Partial<ResourcePickerCatalogResponse>;
 }
 
 export interface MockWebhook {
