@@ -22,6 +22,12 @@ export interface MockShopifyAdminConfig {
   apiVersion?: string;
   scopes?: string[];
   webhooks?: MockWebhook[];
+  /**
+   * Lifetime of minted session tokens, in seconds (default 60, matching real Shopify).
+   * Raise it for E2E runs: a test that outlives the token starts sending requests the
+   * app rejects, which surfaces as an unexplained mid-test redirect to the bounce page.
+   */
+  sessionTokenTtlSeconds?: number;
   debug?: boolean;
   adminApi?: AdminApiConfig;  // How to handle Admin API requests (default: 'mock')
   proxy?: boolean;  // Reverse-proxy the app through mock-bridge for same-origin iframe (Cypress support)
