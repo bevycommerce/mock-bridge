@@ -863,6 +863,44 @@
           }, "*");
         });
       },
+      /**
+       * Adopt the `id_token` the host put in the iframe URL.
+       *
+       * `getSessionToken` only fills `currentSessionToken` once the app asks for a token, but the
+       * patched `window.fetch` below needs one from the very first request. An app that never calls
+       * `shopify.idToken()` (most apps — the real App Bridge hands them an authenticated `fetch`)
+       * would otherwise send every data request unauthenticated, and the host would bounce it to
+       * the session-token page instead of returning data.
+       */
+      seedSessionTokenFromUrl: function() {
+        try {
+          const fromUrl = new URLSearchParams(window2.location.search).get("id_token");
+          if (fromUrl && !currentSessionToken) {
+            currentSessionToken = fromUrl;
+            console.log("[MockAppBridge] Seeded session token from id_token URL param");
+          }
+        } catch (e) {
+          console.warn("[MockAppBridge] Could not read id_token from URL:", e.message);
+        }
+        return currentSessionToken;
+      },
+      /**
+       * Keep a live token in hand. Mock tokens are short-lived by design (see
+       * `sessionTokenTtlSeconds`), and a stale one fails validation exactly like no token at all.
+       */
+      startSessionTokenRefresh: function(ttlSeconds) {
+        if (tokenRefreshInterval) return;
+        if (window2.parent === window2) return;
+        const ttlMs = (ttlSeconds && ttlSeconds > 0 ? ttlSeconds : 60) * 1e3;
+        const intervalMs = Math.max(5e3, Math.min(3e4, Math.floor(ttlMs / 2)));
+        tokenRefreshInterval = window2.setInterval(async () => {
+          try {
+            await utilities.getSessionToken(null);
+          } catch (error) {
+            console.error("[MockAppBridge] Token refresh failed:", error);
+          }
+        }, intervalMs);
+      },
       authenticatedFetch: function(app2, fetch2) {
         return async function(...args) {
           const token = await utilities.getSessionToken(app2);
@@ -941,15 +979,7 @@
         }
       };
       appInstances.set(config2.apiKey, app2);
-      if (!tokenRefreshInterval) {
-        tokenRefreshInterval = window2.setInterval(async () => {
-          try {
-            await utilities.getSessionToken(app2);
-          } catch (error) {
-            console.error("[MockAppBridge] Token refresh failed:", error);
-          }
-        }, 5e4);
-      }
+      utilities.startSessionTokenRefresh();
       return app2;
     }
     const platform = {
@@ -1048,6 +1078,8 @@
       return "http://localhost:3080";
     };
     mockServerUrl = detectMockServerUrl();
+    utilities.seedSessionTokenFromUrl();
+    utilities.startSessionTokenRefresh();
     const fetchAdminApiConfig = async () => {
       try {
         const response = await fetch(`${mockServerUrl}/api/config`);
@@ -1055,6 +1087,13 @@
         if (config2.adminApi) {
           adminApiConfig = config2.adminApi;
           console.log("[MockAppBridge] Admin API config:", adminApiConfig);
+        }
+        if (config2.sessionTokenTtlSeconds) {
+          if (tokenRefreshInterval) {
+            window2.clearInterval(tokenRefreshInterval);
+            tokenRefreshInterval = null;
+          }
+          utilities.startSessionTokenRefresh(config2.sessionTokenTtlSeconds);
         }
       } catch (error) {
         console.warn("[MockAppBridge] Could not fetch admin API config, using default (mock)");

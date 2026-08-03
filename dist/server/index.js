@@ -98,6 +98,7 @@ class MockShopifyAdminServer {
                 appPath: this.config.appPath,
                 adminApi: this.config.adminApi,
                 proxy: this.config.proxy,
+                sessionTokenTtlSeconds: this.config.sessionTokenTtlSeconds,
             });
         });
         // Mock resource picker catalog (admin-frame UI)
@@ -123,6 +124,7 @@ class MockShopifyAdminServer {
                 clientId: this.config.clientId,
                 clientSecret: this.config.clientSecret,
                 userId: this.mockUser.id,
+                expiresInSeconds: this.config.sessionTokenTtlSeconds,
             });
             res.json({ token });
         });

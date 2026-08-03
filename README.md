@@ -570,6 +570,11 @@ const server = new MockShopifyAdminServer({
   ],
   debug: true, // Enable debug logging
 
+  // Session token lifetime in seconds (default 60, matching real Shopify).
+  // Raise it for E2E runs — a test that outlives the token starts sending requests
+  // the app rejects, which looks like an unexplained mid-test redirect.
+  sessionTokenTtlSeconds: 3600,
+
   // Admin API handling (see below)
   adminApi: "mock",
 });
