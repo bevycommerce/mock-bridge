@@ -85,6 +85,10 @@
 
 ## 📦 Installation
 
+> **Node.js requirements**
+> - **Using the package:** Node.js **18+**. The published package ships prebuilt, so you never run the build toolchain.
+> - **Building from source:** Node.js **^20.19.0 || >=22.12.0**, required by Vite 7 (the admin frame's bundler). This also applies when installing from a git ref, since `prepare` runs the full build. CI builds and publishes on Node 22.
+
 ```bash
 npm install @getverdict/mock-bridge --save-dev
 # or
